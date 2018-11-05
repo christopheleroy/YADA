@@ -47,7 +47,6 @@ import com.novartis.opensource.yada.plugin.Bypass;
 import com.novartis.opensource.yada.plugin.Postprocess;
 import com.novartis.opensource.yada.plugin.Preprocess;
 import com.novartis.opensource.yada.plugin.YADAPluginException;
-import com.novartis.opensource.yada.plugin.YADASecurityException;
 import com.novartis.opensource.yada.util.FileUtils;
 import com.novartis.opensource.yada.util.QueryUtils;
 import com.novartis.opensource.yada.util.YADAUtils;
@@ -308,13 +307,13 @@ public class Service {
   		{
   			getYADARequest().setMethod(paraMap.get(YADARequest.PS_METHOD));
   		}
-  		if (paraMap.get(YADARequest.PL_OVERARGS) != null)
+  		if (paraMap.get(YADARequest.PL_OAUTH) != null)
   		{
-  		  setDeprecatedPlugin(paraMap, YADARequest.PL_OVERARGS);
+  		  getYADARequest().setOAuth(paraMap.get(YADARequest.PL_OAUTH));
   		}
-  		if (paraMap.get(YADARequest.PS_OVERARGS) != null)
+  		if (paraMap.get(YADARequest.PS_OAUTH) != null)
   		{
-  		  setDeprecatedPlugin(paraMap, YADARequest.PS_OVERARGS);
+  			getYADARequest().setOAuth(paraMap.get(YADARequest.PS_OAUTH));
   		}
   		if (paraMap.get(YADARequest.PL_BYPASSARGS) != null)
   		{
@@ -513,6 +512,7 @@ public class Service {
 			j.put("Exception", e.getClass().getName());
       j.put("Message",msg);
       j.put("Qname",yq != null ? yq.getQname() : "UNKNOWN");
+      j.put("App", yq != null ? yq.getApp() : "UNKNOWN");
       j.put("Query",yq != null ? yq.getYADACode() : "");
       j.put("Params",new JSONArray());
       JSONArray ja = j.getJSONArray("Params");
@@ -671,8 +671,6 @@ public class Service {
 			l.error(e.getMessage(),e);
 			result = error(e.getMessage(),e);
 		}
- 
-		
 		return result;
 	}
 
@@ -1021,7 +1019,7 @@ public class Service {
             args   = plugin.substring(firstCommaIndex+1);
             plugin = plugin.substring(0, firstCommaIndex);
             // add a query parameter for the arg list
-            yp = new YADAParam(YADARequest.PS_ARGLIST, args, yq.getQname(), YADAParam.NONOVERRIDEABLE, true); 
+            yp = new YADAParam(YADARequest.PS_ARGLIST, args, plugin, YADAParam.NONOVERRIDEABLE, true); 
             yq.addParam(yp);
           }
 					l.debug("possible bypass plugin is["+plugin+"]");
@@ -1109,7 +1107,8 @@ public class Service {
 			      args   = plugin.substring(firstCommaIndex+1);
 			      plugin = plugin.substring(0, firstCommaIndex);
 			      // add a query parameter for the arg list
-			      yp = new YADAParam(YADARequest.PS_ARGLIST, args, yq.getQname(), YADAParam.NONOVERRIDEABLE, true); 
+			      //yp = new YADAParam(YADARequest.PS_ARGLIST, args, yq.getQname(), YADAParam.NONOVERRIDEABLE, true);
+			      yp = new YADAParam(YADARequest.PS_ARGLIST, args, plugin, YADAParam.NONOVERRIDEABLE, true);
 			      yq.addParam(yp);
           }
 					l.debug("possible preprocess plugin is["+plugin+"]");
@@ -1135,6 +1134,7 @@ public class Service {
 									  // remove the param that was created earlier, to avoid potential conflicts later
 									  //TODO review security and other implications of removing the arglist parameter from the query object
 									  yq.getYADAQueryParams().remove(yp);
+									  yq.clearResources();
 										this.qMgr.prepQueryForExecution(this.qMgr.endowQuery(yq));
 									} 
 									catch (YADAQueryConfigurationException|YADAResourceException|YADAUnsupportedAdaptorException e)
@@ -1212,7 +1212,7 @@ public class Service {
             args   = plugin.substring(firstCommaIndex+1);
             plugin = plugin.substring(0, firstCommaIndex);
             // add a query parameter for the arg list
-            yp = new YADAParam(YADARequest.PS_ARGLIST, args, yq.getQname(), YADAParam.NONOVERRIDEABLE, true); 
+            yp = new YADAParam(YADARequest.PS_ARGLIST, args, plugin, YADAParam.NONOVERRIDEABLE, true); 
             yq.addParam(yp);
           }
 					l.debug("possible postprocess plugin is["+plugin+"]");
@@ -1374,6 +1374,8 @@ public class Service {
 								// reset query manager, as service parameters may have changed
 								try
 								{
+									// close existing connections first
+									this.qMgr.releaseResources();
 									this.qMgr = new QueryManager(getYADARequest());
 								} 
 								catch (YADAQueryConfigurationException e)

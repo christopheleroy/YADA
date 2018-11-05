@@ -155,7 +155,7 @@ public class QueryUtils
 	 */
 	public static final String RX_DELETE = "^DELETE.*";
 	/**
-	 * A constant equal to: {@code ^([^&lt;]+)((&lt;{1,2})(.+))*$ }
+	 * A constant equal to: {@code ^([^&lt;]+)((&lt;&lcub;1,2&rcub;)(.+))*$ }
 	 * @since PROVISIONAL
 	 */
 	public final static String RX_FILE_URI = "^([^<]+)((<{1,2})(.+))*$";
@@ -222,6 +222,10 @@ public class QueryUtils
 	 * A constant equal to: {@value}
 	 */
 	public static final String STANDARD_DATE_FMT = "yyyy-MM-dd";
+	/**
+	 * A constant equal to: {@value}
+	 */
+	public static final String QUOTE = "\"";
 
 	/**
 	 * Retrieves the adaptor class from the application context given the
@@ -1000,7 +1004,9 @@ public class QueryUtils
           colName = YADA_COLUMN + (j + 1);
         else if (data.containsKey(colName.toUpperCase()))
           colName = colName.toUpperCase();
-          
+        else if(data.containsKey(colName.replaceAll("\"", "").toUpperCase()))        
+        	colName = colName.replaceAll("\"", "").toUpperCase();
+        
         String[] valsForColumn;
 
         valsForColumn = data.get(colName);
@@ -1261,6 +1267,10 @@ public class QueryUtils
 	        { // json params uppper case
 	          colName = colName.toUpperCase();
 	        }
+	        else if(dataForRow.containsKey(colName.replaceAll("\"", "").toUpperCase()))
+	        {
+	        	colName = colName.replaceAll("\"", "").toUpperCase();
+	        }
 	        
 	        // length of value array for inColumn
 	        int dataLen = dataForRow.get(colName).length;
@@ -1351,7 +1361,7 @@ public class QueryUtils
 			for (String in : inColumns)
 			{
 				int colIndex = -1, j = 0;
-				String inCol = in.toUpperCase(); // TODO case sensitivity
+				String inCol = in.toUpperCase(); 
 
 				// get the index of the 'incolumn' in the 'JDBCcolumns' array
 				l.debug("Looking for column [" + inCol + "] in columns array " + ArrayUtils.toString(columns));

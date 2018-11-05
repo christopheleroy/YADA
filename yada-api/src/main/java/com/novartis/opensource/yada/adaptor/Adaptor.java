@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import com.novartis.opensource.yada.YADAQuery;
 import com.novartis.opensource.yada.YADAQueryResult;
 import com.novartis.opensource.yada.YADARequest;
+import com.novartis.opensource.yada.YADASecurityException;
 
 /**
  * The abstract Adaptor class is at the root of the package hierarchy. Adaptors
@@ -53,6 +54,12 @@ public abstract class Adaptor
 	protected YADARequest yadaReq;
 
 	/**
+	 * YADA app to which the qname is mapped
+	 * @since 8.6.1
+	 */
+	protected String app;
+	
+	/**
 	 * Default constructor
 	 */
 	public Adaptor()
@@ -73,8 +80,9 @@ public abstract class Adaptor
 	 * 
 	 * @param yq the {@link YADAQuery} containing the code to execute
 	 * @throws YADAAdaptorExecutionException if exception is thrown during query execution 
+	 * @throws YADASecurityException if there is authentication or authorization error in preparation for or during execution
 	 */
-	public void execute(YADAQuery yq) throws YADAAdaptorExecutionException
+	public void execute(YADAQuery yq) throws YADAAdaptorExecutionException, YADASecurityException
 	{
 		//
 	}
@@ -124,7 +132,7 @@ public abstract class Adaptor
 	 * @param yq the query to which to apply the new settings
 	 */
 	protected void resetCountParameter(YADAQuery yq) {
-		//TODO run this through the debugger to check the distinction betwen these 2 instances of yadaReq
+		//TODO run this through the debugger to check the distinction between these 2 instances of yadaReq
 		this.yadaReq.setCount(new String[] {"false"});
 		yq.replaceParam(YADARequest.PS_COUNT, "false");
 	}

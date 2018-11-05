@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.xml.soap.SOAPConnection;
@@ -526,7 +527,7 @@ public class YADAQuery {
 	 * @since 7.1.4
 	 */
 	public List<YADAParam> getYADAQueryParamsForKey(String key) {
-	  List<YADAParam> paramList = new ArrayList<>();
+	  List<YADAParam> paramList = new ArrayList<>(1000);
 	  for(YADAParam yp : this.yqParams)
 	  {
 	    if(yp.getName().equals(key))
@@ -540,17 +541,22 @@ public class YADAQuery {
 	 * @param key name of parameter whose value is sought
 	 * @return an array containing the value associated to param with name {@code key} 
 	 */
-	public String[] getYADAQueryParamValue(String key) {
+	public String[] getYADAQueryParamValue(String key) {	
+		boolean hasVal = false;
 		if(getParam(key) != null)
 		{
-	    String[] values = new String[getParam(key).size()];
-	    int i=0;
+	    String[] values = new String[1000];
 	    for(YADAParam param : getParam(key))
 	    {
-	      values[i++] = param.getValue();
+	      values[param.getId()] = param.getValue();
+	      hasVal = true;
+	    	//TODO 'id' is used as "rank" or order of execution.  This is bad.  
+      	// Need a sequence field in the model, or a ui gadget (dnd) to change the 
+      	// order (it can only be done in the db directly now). If the same 'id'
+      	// field is reused, it should be renamed to 'seq','ord','rank' etc.      	
 	    }
-	    if(values.length > 0)
-	      return values;
+	    if(hasVal)
+	      return Arrays.stream(values).filter(Objects::nonNull).toArray(String[]::new);	    
 		}
 		return null;		
 	}
@@ -562,17 +568,57 @@ public class YADAQuery {
    * @return an array containing the value associated to param with name {@code key} 
    */
   public String[] getYADAQueryParamValuesForTarget(String key) {
+  	boolean hasVal = false;
     if(getParam(key) != null)
     {
-      String[] values = new String[getParam(key).size()];
-      int i=0;
+      String[] values = new String[1000];
       for(YADAParam param : getParam(key))
       {
         if(param.getTarget().equals(this.getQname()))
-          values[i++] = param.getValue();
+        {
+        	values[param.getId()] = param.getValue();
+        	hasVal = true;
+        	//TODO 'id' is used as "rank" or order of execution.  This is bad.  
+        	// Need a sequence field in the model, or a ui gadget (dnd) to change the 
+        	// order (it can only be done in the db directly now). If the same 'id'
+        	// field is reused, it should be renamed to 'seq','ord','rank' etc.
+        	
+        }
       }
-      if(values.length > 0)
-        return Arrays.copyOfRange(values,0,i);
+      if(hasVal)
+	      return Arrays.stream(values).filter(Objects::nonNull).toArray(String[]::new);	    
+    }
+    return null;    
+  }
+  
+  /**
+   * Returns an array containing the value associated to param with name {@code key}
+   * where target is arbitrary, usually a qname or plugin name 
+   * @param key name of parameter whose value is sought
+   * @param target name of target for param value, usually a qname or plugin name
+   * @return an array containing the value associated to param with name {@code key} and target {@code target}
+   * @since 8.5.0
+   */
+  public String[] getYADAQueryParamValuesForTarget(String key, String target) {
+  	boolean hasVal = false;
+    if(getParam(key) != null)
+    {
+      String[] values = new String[1000];
+      for(YADAParam param : getParam(key))
+      {
+        if(param.getTarget().equals(target))
+        {
+        	//TODO 'id' is used as "rank" or order of execution.  This is bad.  
+        	// Need a sequence field in the model, or a ui gadget (dnd) to change the 
+        	// order (it can only be done in the db directly now). If the same 'id'
+        	// field is reused, it should be renamed to 'seq','ord','rank' etc.        	
+        	values[param.getId()] = param.getValue();
+        	hasVal = true;
+        }
+          
+      }
+      if(hasVal)
+	      return Arrays.stream(values).filter(Objects::nonNull).toArray(String[]::new);	    
     }
     return null;    
   }
@@ -585,6 +631,18 @@ public class YADAQuery {
 	 */
 	private boolean isPluginParam(String key) {
 	  if(key.equals(YADARequest.PL_PLUGIN) || key.equals(YADARequest.PS_PLUGIN))
+	    return true;
+	  return false;
+	}
+	
+	/**
+	 * Tests value of parameter name
+	 * @param key the name of the param
+	 * @return {@code true} if {@code key} = {@link YADARequest#PS_ARGLIST}
+	 * @since 8.5.0
+	 */
+	private boolean isArgumentParam(String key) {
+	  if(key.equals(YADARequest.PS_ARGLIST))
 	    return true;
 	  return false;
 	}
@@ -652,7 +710,7 @@ public class YADAQuery {
 		  list = new ArrayList<>();
 		  list.add(param);
       this.keys.put(key,list);
-      if(param.getRule() != 0)
+      if(param.getRule() != YADAParam.OVERRIDEABLE)
       {
         if(!hasNonOverridableParam(key))
         {
@@ -665,9 +723,15 @@ public class YADAQuery {
 		else if(isPluginParam(key)) // if it's a plugin, just add it straight away
 		{
 		  this.keys.get(key).add(param);
-      if(param.getRule() != 0)
+      if(param.getRule() != YADAParam.OVERRIDEABLE)
         this.immutableKeys.get(key).add(param);
     }
+		else if(isArgumentParam(key))
+		{
+			this.keys.get(key).add(param);
+			if(param.getRule() != YADAParam.OVERRIDEABLE)
+				this.immutableKeys.get(key).add(param);
+		}
 		else
 		{
 		  // if the param is not a plugin param, and it's 
@@ -676,7 +740,7 @@ public class YADAQuery {
 	    if(!hasNonOverridableParam(key)) // this confirms no immutables (non-overrides)
 	    {
 		    this.keys.get(key).add(param);
-	      if(param.getRule() != 0)
+	      if(param.getRule() != YADAParam.OVERRIDEABLE)
 	        this.immutableKeys.get(key).add(param);
 	    }
 		}
@@ -709,7 +773,7 @@ public class YADAQuery {
 	public void addParam(YADAParam param)
 	{
 		String key = param.getName();
-		if(isPluginParam(key))
+		if(isPluginParam(key) || isArgumentParam(key))
 		{
 		  List<YADAParam> lp = getYADAQueryParams();
       String  value  = param.getValue();
@@ -748,7 +812,6 @@ public class YADAQuery {
         setKey(param);
       }
     }
-		
 	}
 	
 	/**
@@ -1008,16 +1071,46 @@ public class YADAQuery {
 	 */
 	public void setConnection(String app) throws YADAConnectionException 
 	{
-		this.setConnection(app, true);
+		if(this.getProtocol().equals(Parser.SOAP))
+		{
+			this.setSOAPConnection(ConnectionFactory.getConnectionFactory().getSOAPConnection());
+		}
+		else
+		{
+			Connection c = ConnectionFactory.getConnectionFactory().getConnection(app);
+			this.setConnection(c);
+			try
+			{
+				if(!c.getAutoCommit())
+				{
+					try
+					{
+						this.setSavepoint(c.setSavepoint());
+					}
+					catch(SQLException e)
+					{
+						String msg = "This JDBC driver does not support savepoints.";
+						l.warn(msg);
+					}
+				} 
+			}
+			catch (SQLException e)
+			{
+				String msg = "Unable to configure connection for transaction.";
+				throw new YADAConnectionException(msg,e);
+			}
+		}
 	}
 	
 	/**
 	 * Set a transactional or non-transactional connection for the source
 	 * @since 4.0.0
+	 * @deprecated since 8.6.1
 	 * @param app the app name stored in the query
 	 * @param transactions set to {@code true} to execute multiple queries as a single transaction.
 	 * @throws YADAConnectionException when the connection can't be opened
 	 */
+	@Deprecated
 	public void setConnection(String app, boolean transactions) throws YADAConnectionException 
 	{
 		if(this.getProtocol().equals(Parser.SOAP))
@@ -1053,14 +1146,78 @@ public class YADAQuery {
 	}
 	
 	/**
-	 * Checks for the type of connection used by the queries and renders it null.  This is 
+	 * Closes {@link CallableStatement}s {@link PreparedStatement}s and Connections
+	 * in order to avoid connection and memory leaks in {@link com.novartis.opensource.yada.plugin.Preprocess} scenarios
+	 * @throws YADAConnectionException when a resource can't be closed
+	 * @since 8.6.1
+	 */
+	public void clearResources() throws YADAConnectionException
+	{
+		this.clearCsmts();
+		this.clearPsmts();
+		this.clearConnection();
+	}
+	
+	/**
+	 * Checks for the any {@link CallableStatement}s used by the queries and renders it null.  This is 
 	 * to facilitate long term storage of the query in the cache
+	 * @throws YADAConnectionException when a resource can't be closed
+	 * @since 8.6.1
+	 */
+	public void clearCsmts() throws YADAConnectionException 
+	{
+		if(this.getCstmt().size() > 0)
+		{
+			for(int i = 0; i < this.getCstmt().size(); i++)
+			{
+				ConnectionFactory.releaseResources(this.getCstmt(i));
+			}
+			this.setCstmt(new ArrayList<CallableStatement>());
+		}
+	}
+	
+	/**
+	 * Checks for the any {@link PreparedStatement}s used by the queries and renders it null.  This is 
+	 * to facilitate long term storage of the query in the cache
+	 * @throws YADAConnectionException when a resource can't be closed
+	 * @since 8.6.1
+	 */
+	public void clearPsmts() throws YADAConnectionException 
+	{
+		if(this.getPstmtForCount().size() > 0)
+		{
+			for(PreparedStatement pstmtKey : this.getPstmtForCount().keySet())
+			{
+				ConnectionFactory.releaseResources(this.getPstmtForCount(pstmtKey));
+			}
+			this.setPstmtForCount(new HashMap<PreparedStatement,PreparedStatement>());
+		}
+		
+		if(this.getPstmt().size() > 0)
+		{
+			for(int i = 0; i < this.getPstmt().size(); i++)
+			{
+				ConnectionFactory.releaseResources(this.getPstmt(i));
+			}
+			this.setPstmt(new ArrayList<PreparedStatement>());
+			
+		}
+	}
+	
+	/**
+	 * Checks for the type of Connection used by the queries, closes and nullifies them.  This is 
+	 * to avoid connection leaks in {@link com.novartis.opensource.yada.plugin.Preprocess} plugin scenarios, as well as 
+	 * facilitate long term storage of the query in the cache.
+	 * @throws YADAConnectionException when a resource can't be closed
 	 * @since 4.1.0
 	 */
-	public void clearConnection() 
+	public void clearConnection() throws YADAConnectionException 
 	{
 		if(this.connection != null)
+		{
+			ConnectionFactory.releaseResources(this.connection);
 			this.connection = null;
+		}
 		else if(this.soapConnection != null)
 			this.soapConnection = null;
 		else
@@ -1550,5 +1707,28 @@ public class YADAQuery {
    */
   public void setAccessCount(int accessCount) {
     this.accessCount = accessCount;
+  }
+  
+  /**
+   * @since 9.0.0
+   */
+  @Override
+  public String toString() {
+  	JSONObject jo = new JSONObject();
+  	jo.append("qname", getQname());
+  	JSONArray data = new JSONArray();
+  	for (int i=0;i<getData().size();i++)
+  	{
+  		JSONObject djo = new JSONObject();
+  		LinkedHashMap<String,String[]> row = getDataRow(i);
+  		for(Map.Entry<String,String[]> entry : row.entrySet())
+  		{
+  			String key = entry.getKey();
+  			String[] value = entry.getValue();
+  			djo.put(key, new JSONArray(value));
+  		}
+  	}
+  	jo.append("DATA", data);
+  	return jo.toString();
   }
 }

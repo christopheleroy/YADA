@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 define(
-	
+
 	function(require) {
 
 		return { initialize: initialize };
@@ -29,31 +29,33 @@ define(
 			         'component/app-mgr',
 			         'component/migration',
 			         'component/query-params'
-			         ], 
-			         
+			         ],
+
 		  function ($, domReady, bootstrap, header, login, appMgr, /*qtable, appSelector,*/ migration, params) {
-				
+
 				// set ajax defaults
 				var appContext = (this.context() != "ROOT" ? this.context() + '/': '');
+        var baseUrl = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
 				var defaultUrl = '/' + appContext + 'yada.jsp';
 				$.ajaxSetup({
-					url: defaultUrl,
-		      type: 'GET',
-		      dataType: 'json'
-				});
-				
-			    
+					url: baseUrl + defaultUrl,
+          type: 'GET',
+          dataType: 'json'
+        });
+
+
+
 		    $.fn.when = function( events, eventData ) {
-		        
+
 		        events = events.split( /\s/g ); // parse list of events
-		        
+
 		        var deferreds = [], // array of deferreds
 		            iElem, // each $node
 		            lengthElem = this.length, // length of $nodes array
 		            iEvent, // each event
 		            lengthEvent = events.length, // length of events array
 		            elem; // each elemment
-		        
+
 		        for( iElem = 0; iElem < lengthElem; iElem++ ) { // for each $node
 		            elem = $( this[ iElem ] );
 		            for ( iEvent = 0; iEvent < lengthEvent; iEvent++ ) { // for each event
@@ -88,7 +90,7 @@ define(
 				            .css({
 				                "position": "absolute",
 				                "background-color": "#ffff99",
-				                "opacity": ".9"   
+				                "opacity": ".9"
 				            })
 				            .fadeOut(1500);
 				    });
@@ -107,7 +109,7 @@ define(
 				      login.attachTo('#login');
 				  }
 				});
-				
+
 				appMgr.attachTo('#app-mgr');
 				migration.attachTo('.nest');
 			});

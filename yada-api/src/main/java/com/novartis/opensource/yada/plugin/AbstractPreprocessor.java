@@ -35,6 +35,7 @@ import com.novartis.opensource.yada.YADAConnectionException;
 import com.novartis.opensource.yada.YADAQuery;
 import com.novartis.opensource.yada.YADARequest;
 import com.novartis.opensource.yada.YADASQLException;
+import com.novartis.opensource.yada.YADASecurityException;
 import com.novartis.opensource.yada.util.YADAUtils;
 
 /**
@@ -182,19 +183,23 @@ public abstract class AbstractPreprocessor implements Preprocess, Validation, To
 	{
 	  setYADARequest(yadaReq);
 	  setYADAQuery(yq);
-	  String[] args = getYADAQuery().getYADAQueryParamValue(YADARequest.PS_ARGLIST);
+	  String[] args = getYADAQuery().getYADAQueryParamValuesForTarget(YADARequest.PS_ARGLIST, this.getClass().getSimpleName());
     if(args != null && args.length > 0)
       setArgs(Arrays.asList(args[0].split(",")));
 	  else
 	  {
-	    args = getYADAQuery().getYADAQueryParamValue(YADARequest.PS_ARGS);
+	  	args = getYADAQuery().getYADAQueryParamValuesForTarget(YADARequest.PS_ARGLIST, this.getClass().getName());
       if(args != null && args.length > 0)
         setArgs(Arrays.asList(args[0].split(",")));
       else
       {
-        args = getYADAQuery().getYADAQueryParamValue(YADARequest.PS_PREARGS);
+      	args = getYADAQuery().getYADAQueryParamValue(YADARequest.PS_ARGS);
         if(args != null && args.length > 0)
-          setPreargs(Arrays.asList(args[0].split(",")));
+          setArgs(Arrays.asList(args[0].split(",")));
+        else
+	        args = getYADAQuery().getYADAQueryParamValue(YADARequest.PS_PREARGS);
+	        if(args != null && args.length > 0)
+	          setPreargs(Arrays.asList(args[0].split(",")));
       }
 	  }
 	}

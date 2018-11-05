@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.novartis.opensource</groupId>
     <artifactId>YADA</artifactId>
-    <version>8.5.0-SNAPSHOT</version>
+    <version>8.7.6-SNAPSHOT</version>
   </parent>
   <artifactId>yada-api</artifactId>
   <name>yada-api</name>
@@ -612,6 +612,14 @@
           <include>utils/**</include>
         </includes>
       </resource>
+      <resource>
+        <directory>${basedir}/src/main/resources/META-INF</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>MANIFEST.MF</include>
+        </includes>
+        <targetPath>META-INF</targetPath>
+      </resource>
     </resources>
     <testResources>
       <testResource>
@@ -622,6 +630,14 @@
           <include>log4j.properties</include>
           <include>YADA.properties</include>
         </includes>
+      </testResource>
+      <testResource>
+        <directory>${basedir}/src/main/resources/META-INF</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>MANIFEST.MF</include>
+        </includes>
+        <targetPath>META-INF</targetPath>
       </testResource>
       <testResource>
         <directory>${basedir}/src/test/resources/conf</directory>
@@ -655,6 +671,7 @@
         <configuration>
           <archive>
             <addMavenDescriptor>false</addMavenDescriptor>
+            <manifestFile>target/classes/META-INF/MANIFEST.MF</manifestFile> 
           </archive>
         </configuration>
         <executions>
@@ -849,6 +866,16 @@
     </plugins>
   </reporting>
   <dependencies>
+    <dependency>
+	    <groupId>com.google.oauth-client</groupId>
+	    <artifactId>google-oauth-client</artifactId>
+	    <version>1.22.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client-jackson2</artifactId>
+      <version>1.11.0-beta</version>
+    </dependency>
     <dependency>
       <groupId>com.novartis.opensource</groupId>
       <artifactId>jsqlparser</artifactId>
@@ -1047,7 +1074,7 @@
 		<dependency>
       <groupId>com.zaxxer</groupId>
       <artifactId>HikariCP</artifactId>
-      <version>2.4.7</version>
+      <version>3.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.seleniumhq.selenium</groupId>
