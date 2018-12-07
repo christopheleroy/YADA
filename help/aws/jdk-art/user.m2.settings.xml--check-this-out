@@ -1,0 +1,98 @@
+<!--
+      |
+ | Inspired from  NIBR Maven Settings
+ |
+ | This settings.xml contains the minimum configuration necessary to start working
+ | with Maven in your corporate environment as your internal Development Operations manages an internal
+ | Artifactory repository manager at an address like below (and assumed in this example file)
+ |
+ | http://repo.devops.yourcorpdmain.net/artifactory
+ |
+ | The Artifactory server is likely browseable at the URL above.
+ |
+ | Requests for all artifacts is likely to be 'mirrored' through this repository.  This
+ | includes internally developed artifacts well as artifacts hosted on Maven Central
+ | or other external sites (JBoss, Spring, etc).  Mirroring  is specified by the
+ | <mirror> section of this settings file, and forces requests to ANY repository to
+ | first go through (this address)/public.  Both release
+ | and snapshot artifacts are available from this Artifactory URL.
+ |
+ | If your project requires access to artifacts not hosted in repositories already
+ | proxied by Artifactory, please contact your DevOps 
+ |
+ | HTTP/HTTPS proxy settings should NOT be required in this file, as the Artifactory
+ | server manages communication with external Maven repositories.
+ |
+ | ______________________________________________________________________________
+ |
+ | This is the configuration file for Maven. It can be specified at two levels:
+ |
+ |  1. User Level. This settings.xml file provides configuration for a single user,
+ |                 and is normally provided in ${user.home}/.m2/settings.xml.
+ |
+ |                 NOTE: This location can be overridden with the CLI option:
+ |
+ |                 -s /path/to/user/settings.xml
+ |
+ |  2. Global Level. This settings.xml file provides configuration for all Maven
+ |                 users on a machine (assuming they're all using the same Maven
+ |                 installation). It's normally provided in
+ |                 ${maven.home}/conf/settings.xml.
+ |
+ |                 NOTE: This location can be overridden with the CLI option:
+ |
+ |                 -gs /path/to/global/settings.xml
+ |
+ |-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+ 
+  <mirrors>
+    <mirror>
+ 
+      <!-- mirror all remote repositories through the specified repository -->
+      <id>changeme-artifactory</id>
+      <mirrorOf>*</mirrorOf>
+      <url>https://repo.devops.mycorporatedomain.net/artifactory/public</url>
+    </mirror>
+  </mirrors>
+ 
+  <profiles>
+    <profile>
+      <id>nibr</id>
+ 
+      <!--enable snapshots for the built in central repo to direct all requests to artifactory -->
+ 
+ 
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>your-department</activeProfile>
+  </activeProfiles>
+ 
+</settings>

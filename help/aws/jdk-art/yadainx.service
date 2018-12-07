@@ -1,0 +1,20 @@
+[Unit]
+Description=Yada Index via HSQLdb
+After=syslog.target network.target
+
+[Service]
+Type=forking
+
+Environment=JAVA_HOME=/usr/lib/jvm/jre
+Environment=YADAINDEX=/opt/tomcat/yada-index
+Environment=YADAINDEX_PORT=9137
+
+ExecStart=/opt/tomcat/yada-index/service/startup.sh
+ExecStop=/opt/tomcat/yada-index/service/shutdown.sh
+
+User=tomcat
+Group=tomcat
+
+[Install]
+WantedBy=multi-user.target
+
