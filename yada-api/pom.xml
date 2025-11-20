@@ -520,17 +520,17 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
-      <version>11.0.25</version>
+      <version>11.0.26</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.http2</groupId>
       <artifactId>http2-server</artifactId>
-      <version>11.0.25</version>
+      <version>11.0.26</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-rewrite</artifactId>
-      <version>11.0.25</version>
+      <version>11.0.26</version>
     </dependency>
     <dependency>
         <groupId>com.sun.xml.messaging.saaj</groupId>
@@ -539,7 +539,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.18</version>
+      <version>1.5.19</version>
     </dependency>
     <dependency>
       <groupId>org.mozilla</groupId>
